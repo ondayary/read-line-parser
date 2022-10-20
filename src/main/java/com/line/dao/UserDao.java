@@ -1,10 +1,14 @@
 package com.line.dao;
 
 import com.line.domain.User;
+import org.junit.jupiter.api.Test;
+import org.springframework.dao.EmptyResultDataAccessException;
 
 import javax.xml.transform.Result;
 import java.sql.*;
 import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class UserDao {
 
@@ -77,11 +81,27 @@ public class UserDao {
             pstmt.close();
             c.close();
 
+            // 결과값이 없을때 exception 처리
+            /*
+            결과값이 없으면 rs.next()했을 때 ResultSet에 null값이 들어갑니다.
+            그래서 null이 아닐때(값이 있을 때)에만 User 오브젝트를 생성하도록 수정 합니다.
+            그리고 User오브젝트가 null인채로 끝나면 에러를 던져 줍니다.
+             */
+            if(user == null) throw new EmptyResultDataAccessException(1);
+
             return user;
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Test
+    void findById() {
+        assertThrows(EmptyResultDataAccessException.class, () -> {
+            UserDao userDao = new UserDao();
+            userDao.findById("30");
+        });
     }
 
     public int getCount() throws SQLException {
@@ -101,12 +121,10 @@ public class UserDao {
     }
 
 
-    public void deleteAll(String id) throws SQLException {
+    public void deleteAll() throws SQLException {
         // DB에 접속
-        Connection c = null;
+        Connection c = connectionMaker.makeConnection();
         PreparedStatement pstmt;
-
-        c = connectionMaker.makeConnection();
 
         // delete구문 작성
         pstmt = c.prepareStatement("DELETE FROM users");
