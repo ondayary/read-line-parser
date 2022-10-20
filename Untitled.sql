@@ -1,0 +1,1 @@
+SELECT * FROM `likelion-db`.seoul_hospital;
