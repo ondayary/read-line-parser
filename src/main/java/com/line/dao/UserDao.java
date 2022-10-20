@@ -122,16 +122,30 @@ public class UserDao {
 
 
     public void deleteAll() throws SQLException {
-        // DB에 접속
-        Connection c = connectionMaker.makeConnection();
-        PreparedStatement pstmt;
+        Connection c = null;
+        PreparedStatement pstmt = null;
 
-        // delete구문 작성
-        pstmt = c.prepareStatement("DELETE FROM users");
-//        pstmt.setString(1, id);
-        pstmt.executeUpdate();
-        pstmt.close();
-        c.close();
+        // connection, PreparedStatement할때 에러가 나도 ps.close(), c.close()를 하기 위한 처리
+        try { // 단축키 : opt + cmd + T
+            c = connectionMaker.makeConnection();
+            pstmt = c.prepareStatement("DELETE FROM users"); // delete구문 작성
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally { // 에러가 나도 실행되는 블럭
+            if (pstmt != null) {
+                try {
+                    pstmt.close();
+                } catch (SQLException e) {
+                }
+            }
+            if (c != null) {
+                try {
+                    c.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
     }
 
     // makeConnection() 분리
